@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
@@ -11,17 +12,23 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
-    
+
+    private GameManager gameManager;
+
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
-
-    
+   
     // Start is called before the first frame update
     void Start()
     {
+        // find the game manager object which contains save/load and other persistent data
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        SetBestScore();
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -55,9 +62,16 @@ public class MainManager : MonoBehaviour
         }
         else if (m_GameOver)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            // Save the score to the list of high scores
+            gameManager.SaveScore(m_Points);
+
+            if (Input.GetKeyDown(KeyCode.Space)) // restarts the game
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
+            else if (Input.GetKeyDown(KeyCode.Escape)) // brings player back to the main menu
+            {
+                SceneManager.LoadScene(0);
             }
         }
     }
@@ -72,5 +86,11 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    void SetBestScore()
+    {
+        GameManager.PlayerScore highestScore = gameManager.HighestScore();
+        BestScoreText.text = $"Best Score by " + highestScore.playerName + " Score: " + highestScore.score;
     }
 }
